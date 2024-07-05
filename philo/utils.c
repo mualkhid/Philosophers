@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   utils.c                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rel-fila <rel-fila@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mualkhid <mualkhid@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/06/07 12:24:57 by rel-fila          #+#    #+#             */
-/*   Updated: 2023/06/08 15:15:29 by rel-fila         ###   ########.fr       */
+/*   Created: 2024/07/05 15:45:02 by mualkhid          #+#    #+#             */
+/*   Updated: 2024/07/05 15:45:03 by mualkhid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,8 +27,8 @@ int	ft_memcmp(const void *str1, const void *str2, size_t n)
 	unsigned char	*s1;
 	unsigned char	*s2;
 
-	s1 = (unsigned char *) str1;
-	s2 = (unsigned char *) str2;
+	s1 = (unsigned char *)str1;
+	s2 = (unsigned char *)str2;
 	while (n > 0)
 	{
 		if (*s1 > *s2 || *s1 < *s2)
@@ -58,8 +58,8 @@ void	ft_just_unlock(t_phil *phil)
 void	ft_lone_ranger(t_phil *phil)
 {
 	pthread_mutex_lock(&phil->var->forks[phil->fr_fork]);
-	printf("%ld %d %s\n", get_time_in_ms() - phil->var->start_time, \
-			phil->pos, "has taken a fork");
+	printf("%ld %d %s\n", get_time_in_ms() - phil->var->start_time, phil->pos,
+		"has taken a fork");
 	while (1)
 	{
 		if (get_time_in_ms() - phil->last_time_ate > phil->var->time_to_die)

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rel-fila <rel-fila@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mualkhid <mualkhid@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/06/07 12:24:39 by rel-fila          #+#    #+#             */
-/*   Updated: 2023/06/16 23:05:04 by rel-fila         ###   ########.fr       */
+/*   Created: 2024/07/05 15:44:12 by mualkhid          #+#    #+#             */
+/*   Updated: 2024/07/05 15:44:13 by mualkhid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,8 +39,8 @@ int	start_simulation(t_var *var)
 	while (i < var->num_phil)
 	{
 		var->phil[i].last_time_ate = get_time_in_ms();
-		if (pthread_create(&var->phil[i].thread, NULL, \
-					&application, &var->phil[i]))
+		if (pthread_create(&var->phil[i].thread, NULL, &application,
+				&var->phil[i]))
 			return (printf("Error creating threads\n"), 1);
 		i++;
 	}
@@ -51,8 +51,8 @@ int	start_simulation(t_var *var)
 		i++;
 	}
 	if (var->stop_sign == 1)
-		printf("%ld %d %s\n", get_time_in_ms() - var->start_time, \
-				var->index_of_the_phil_who_died, "died");
+		printf("%ld %d %s\n", get_time_in_ms() - var->start_time,
+			var->index_of_the_phil_who_died, "died");
 	ft_free(var);
 	return (0);
 }
@@ -78,24 +78,24 @@ void	ft_odd_phil(t_phil *phil)
 	while (phil->must_eat)
 	{
 		pthread_mutex_lock(&phil->var->forks[phil->fr_fork]);
-		printf("%ld %d %s\n", get_time_in_ms() - phil->var->start_time, \
-				phil->pos, "has taken a fork");
+		printf("%ld %d %s\n", get_time_in_ms() - phil->var->start_time,
+			phil->pos, "has taken a fork");
 		pthread_mutex_lock(&phil->var->forks[phil->sc_fork]);
-		printf("%ld %d %s\n", get_time_in_ms() - phil->var->start_time, \
-				phil->pos, "has taken a fork");
-		printf("%ld %d %s\n", get_time_in_ms() - phil->var->start_time, \
-				phil->pos, "is eating");
+		printf("%ld %d %s\n", get_time_in_ms() - phil->var->start_time,
+			phil->pos, "has taken a fork");
+		printf("%ld %d %s\n", get_time_in_ms() - phil->var->start_time,
+			phil->pos, "is eating");
 		if (ft_sleep(phil, phil->var->time_to_eat))
 			break ;
 		phil->last_time_ate = get_time_in_ms();
 		pthread_mutex_unlock(&phil->var->forks[phil->sc_fork]);
 		pthread_mutex_unlock(&phil->var->forks[phil->fr_fork]);
-		printf("%ld %d %s\n", get_time_in_ms() - phil->var->start_time, \
-				phil->pos, "is sleeping");
+		printf("%ld %d %s\n", get_time_in_ms() - phil->var->start_time,
+			phil->pos, "is sleeping");
 		if (ft_sleep(phil, phil->var->time_to_sleep))
 			break ;
-		printf("%ld %d %s\n", get_time_in_ms() - phil->var->start_time, \
-				phil->pos, "is thinking");
+		printf("%ld %d %s\n", get_time_in_ms() - phil->var->start_time,
+			phil->pos, "is thinking");
 		phil->must_eat--;
 	}
 }
@@ -108,8 +108,8 @@ int	ft_sleep(t_phil *phil, long time)
 	while (get_time_in_ms() - now < time)
 	{
 		pthread_mutex_lock(phil->var->meal);
-		if (get_time_in_ms() - phil->last_time_ate >= phil->var->time_to_die \
-				&& !phil->var->stop_sign)
+		if (get_time_in_ms() - phil->last_time_ate >= phil->var->time_to_die
+			&& !phil->var->stop_sign)
 		{
 			phil->var->stop_sign = 1;
 			phil->var->index_of_the_phil_who_died = phil->pos;
