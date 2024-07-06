@@ -10,64 +10,59 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "main.h"
+#include "philo.h"
+
+int	ft_isdigit(int c)
+{
+	return (c >= '0' && c <= '9');
+}
 
 size_t	ft_strlen(const char *s)
+{
+	size_t	cnt;
+
+	cnt = 0;
+	while (s[cnt])
+		cnt++;
+	return (cnt);
+}
+
+int	ft_strncmp(const char *s1, const char *s2, size_t n)
 {
 	size_t	i;
 
 	i = 0;
-	while (s[i] != '\0')
+	while (s1[i] && s2[i] && s1[i] == s2[i] && i < n)
 		i++;
-	return (i);
+	if (i < n)
+		return ((unsigned char)s1[i] - (unsigned char)s2[i]);
+	else
+		return (0);
 }
 
-int	ft_memcmp(const void *str1, const void *str2, size_t n)
+int	ft_atoi(const char *str)
 {
-	unsigned char	*s1;
-	unsigned char	*s2;
+	int					i;
+	int					sign;
+	unsigned long int	result;
 
-	s1 = (unsigned char *)str1;
-	s2 = (unsigned char *)str2;
-	while (n > 0)
+	i = 0;
+	sign = 1;
+	result = 0;
+	while (str[i] == 32 || (str[i] >= 9 && str[i] <= 13))
+		i++;
+	if (str[i] == '-')
 	{
-		if (*s1 > *s2 || *s1 < *s2)
-			return (*s1 - *s2);
-		s1++;
-		s2++;
-		n--;
+		sign = -1;
+		i++;
 	}
-	return (0);
-}
-
-void	ft_free(t_var *var)
-{
-	free(var->phil);
-	free(var->forks);
-	free(var->log);
-	free(var->meal);
-}
-
-void	ft_just_unlock(t_phil *phil)
-{
-	pthread_mutex_unlock(phil->var->meal);
-	pthread_mutex_unlock(&phil->var->forks[phil->sc_fork]);
-	pthread_mutex_unlock(&phil->var->forks[phil->fr_fork]);
-}
-
-void	ft_lone_ranger(t_phil *phil)
-{
-	pthread_mutex_lock(&phil->var->forks[phil->fr_fork]);
-	printf("%ld %d %s\n", get_time_in_ms() - phil->var->start_time, phil->pos,
-		"has taken a fork");
-	while (1)
+	else if (str[i] == '+')
+		i++;
+	while (ft_isdigit(str[i]))
 	{
-		if (get_time_in_ms() - phil->last_time_ate > phil->var->time_to_die)
-		{
-			phil->var->index_of_the_phil_who_died = phil->pos;
-			phil->var->time_of_death = get_time_in_ms() - phil->var->start_time;
-			phil->var->stop_sign = 1;
-			break ;
-		}
+		result *= 10;
+		result += str[i] - '0';
+		i++;
 	}
+	return (result * sign);
 }

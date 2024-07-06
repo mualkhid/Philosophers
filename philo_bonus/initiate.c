@@ -10,46 +10,76 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "main.h"
-
-void	initiate_var(int ac, char **av, t_var *var)
+#include "philo_bonus.h"
+void	*check_death(void *arg)
 {
-	var->num_phil = ft_atoi(av[1]);
-	var->time_to_die = ft_atoi(av[2]);
-	var->time_to_eat = ft_atoi(av[3]);
-	var->time_to_sleep = ft_atoi(av[4]);
-	var->must_eat_meals = 0;
-	if (ac - 1 == 5)
-		var->must_eat_meals = ft_atoi(av[5]);
-}
+	t_philo	*philo;
+	t_table	*table;
 
-void	ft_log(char *str, int identity, t_var *var, int check)
-{
-	long	time;
-
-	time = get_time_in_ms() - var->start_time;
-	sem_wait(var->write_sem);
-	if (check == DIED)
-		printf("%ld %d %s\n", time, identity, str);
-	else if (check == DONE_EATING)
-		printf("%ld %d %s\n", time, identity, str);
-	else
+	philo = (t_philo *)arg;
+	table = philo->table;
+	while (1)
 	{
-		printf("%ld %d %s\n", time, identity, str);
-		sem_post(var->write_sem);
+		sem_wait(table->check);
+		if (current_time() - philo->last_meal > (size_t)table->time_to_starve)
+		{
+			display_message(philo, MESSAGE_DEATH);
+			table->dead = 1;
+			exit (1);
+		}
+		sem_post(table->check);
+		if (table->dead)
+			break;
+		usleep(1000);
+		if (table->number_of_meals != -1 && philo->times_eaten >= table->number_of_meals)
+			break;
 	}
-	return ;
+	return (NULL);
 }
 
-void	check_pids(pid_t *pid, t_var *var, t_phil *phil, int i)
+void	exit_simulation(t_table *table)
 {
-	if (pid[i] == -1)
+	int	i;
+	int	status;
+
+	i = -1;
+	while (++i < table->number_of_philos)
 	{
-		while (--i >= 0)
-			kill(var->pid_philos[i], SIGKILL);
-		free(phil);
-		free(var);
-		free(pid);
-		exit(1);
+		waitpid(-1, &status, 0);
+		if (WEXITSTATUS(status) == 1)
+		{
+			i = -1;
+			while (++i < table->number_of_philos)
+				kill(table->philos[i].pid, SIGTERM);
+			break;
+		}
+	}
+	sem_close(table->display);
+	sem_close(table->check);
+	sem_close(table->fork);
+	sem_unlink("/sem_display");
+	sem_unlink("/sem_check");
+	sem_unlink("/sem_fork");
+	free(table->philos);
+}
+
+size_t	current_time(void)
+{
+	struct timeval	t;
+
+	gettimeofday(&t, NULL);
+	return ((t.tv_sec * 1000) + (t.tv_usec / 1000));
+}
+
+void	pass_time(t_table *table, size_t time)
+{
+	size_t	t;
+
+	t = current_time();
+	while (!(table->dead))
+	{
+		if (current_time() - t >= time)
+			break;
+		usleep(100);
 	}
 }

@@ -1,18 +1,18 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   parsing.c                                          :+:      :+:    :+:   */
+/*   parcing.c                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: mualkhid <mualkhid@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/07/05 15:44:24 by mualkhid          #+#    #+#             */
-/*   Updated: 2024/07/05 15:44:25 by mualkhid         ###   ########.fr       */
+/*   Created: 2024/07/05 15:45:39 by mualkhid          #+#    #+#             */
+/*   Updated: 2024/07/05 15:45:40 by mualkhid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "philo.h"
+#include "philo_bonus.h"
 
-static int	verify_numbers(int argc, char *argv[])
+static int	check_numbers(int argc, char *argv[])
 {
 	int	i;
 	int	j;
@@ -36,7 +36,7 @@ static int	verify_numbers(int argc, char *argv[])
 	return (0);
 }
 
-static int	verify_integer(char *s)
+static int	check_integer(char *s)
 {
 	size_t	len;
 
@@ -51,21 +51,6 @@ static int	verify_integer(char *s)
 		return (0);
 	if (ft_strncmp(s, "2147483648", 10) >= 0)
 		return (1);
-	return (0);
-}
-
-static int	validate_args(int argc, char *argv[])
-{
-	int	i;
-
-	if (verify_numbers(argc, argv))
-		return (1);
-	i = 0;
-	while (++i < argc)
-	{
-		if (verify_integer(argv[i]))
-			return (1);
-	}
 	return (0);
 }
 
@@ -90,16 +75,34 @@ static void	initialize(t_table *tab)
 			tab->philos[i].prev = &tab->philos[tab->number_of_philos - 1];
 		else
 			tab->philos[i].prev = &tab->philos[i - 1];
-		pthread_mutex_init(&tab->philos[i].fork, NULL);
 	}
-	pthread_mutex_init(&tab->display, NULL);
-	pthread_mutex_init(&tab->check, NULL);
 }
 
-int	verify_args(int argc, char *argv[], t_table *tab)
+static void	initialize_semaphores(t_table *tab)
 {
-	if (validate_args(argc, argv))
+	tab->display = sem_open("/sem_display", O_CREAT, 0644, 1);
+	tab->check = sem_open("/sem_check", O_CREAT, 0644, 1);
+	tab->fork = sem_open("/sem_fork", O_CREAT, 0644, tab->number_of_philos);
+	if (tab->display == SEM_FAILED || tab->check == SEM_FAILED
+		|| tab->fork == SEM_FAILED)
+	{
+		write(2, "Error! sem_open failed\n", 23);
+		exit(1);
+	}
+}
+
+int	verify_arguments(int argc, char *argv[], t_table *tab)
+{
+	int	i;
+
+	if (check_numbers(argc, argv))
 		return (1);
+	i = 0;
+	while (++i < argc)
+	{
+		if (check_integer(argv[i]))
+			return (1);
+	}
 	tab->number_of_philos = ft_atoi(argv[1]);
 	tab->time_to_starve = ft_atoi(argv[2]);
 	tab->time_to_eat = ft_atoi(argv[3]);
@@ -108,5 +111,6 @@ int	verify_args(int argc, char *argv[], t_table *tab)
 	if (argc == 6)
 		tab->number_of_meals = ft_atoi(argv[5]);
 	initialize(tab);
+	initialize_semaphores(tab);
 	return (0);
 }

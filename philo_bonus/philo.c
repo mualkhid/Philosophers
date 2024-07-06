@@ -10,22 +10,41 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "main.h"
-
-int	main(int ac, char **av)
+#include "philo_bonus.h"
+static int	error(void)
 {
-	t_var	*var;
+	write(2, "Error! invalid arguments\n", 26);
+	return (1);
+}
 
-	var = malloc(sizeof(t_var));
-	if (ac - 1 == 4 || ac - 1 == 5)
+int	main(int argc, char *argv[])
+{
+	int			i;
+	t_table		table;
+
+	// Check if the number of arguments is correct or if arguments are invalid
+	if ((argc < 5 || argc > 6) || verify_arguments(argc, argv, &table))
+		return (error());
+
+	// Initialize the start time of the simulation
+	table.start_time = get_current_time();
+
+	// Create child processes (philosophers)
+	i = -1;
+	while (++i < table.number_of_philosophers)
 	{
-		if (check_valid_input(ac, av))
-			return (1);
-		initiate_var(ac, av, var);
-		start_simulation(var);
+		table.philosophers[i].pid = fork();
+		if (table.philosophers[i].pid == -1)
+		{
+			write(2, "Error! fork failed\n", 19);
+			exit(1);
+		}
+		if (table.philosophers[i].pid == 0)
+			life_cycle((void *)&table.philosophers[i]); // Start life cycle for philosopher in child process
 	}
-	else
-		printf("Usage: ./philo <# philosophers> <time to die> <time to eat>\
-				<time to sleep> [# times each philosopher must eat]\n");
+
+	// Wait for all philosophers to finish
+	exit_simulation(&table);
+
 	return (0);
 }

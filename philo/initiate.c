@@ -10,68 +10,70 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "main.h"
+#include "philo.h"
 
-int	initiate_struct(t_var *var)
-{
-	var->phil = malloc(sizeof(t_phil) * var->num_phil);
-	var->forks = malloc(sizeof(pthread_mutex_t) * var->num_phil);
-	var->log = malloc(sizeof(pthread_mutex_t));
-	var->meal = malloc(sizeof(pthread_mutex_t));
-	if (initiate_mutexeses(var) == 1 || initiate_philo(var) == 1)
-	{
-		free(var->phil);
-		free(var->forks);
-		return (0);
-	}
-	return (1);
-}
-
-int	initiate_philo(t_var *var)
+void	check_death(t_table *tab)
 {
 	int	i;
 
-	i = 0;
-	while (i < var->num_phil)
+	while (!tab->satiated)
 	{
-		var->phil[i].must_eat = var->must_eat_count;
-		var->phil[i].times_ate = 0;
-		var->phil[i].pos = i + 1;
-		var->phil[i].fr_fork = i;
-		var->phil[i].sc_fork = (i + 1) % var->num_phil;
-		var->phil[i].var = var;
-		i++;
+		i = -1;
+		while (!tab->dead && ++i < tab->number_of_philos)
+		{
+			pthread_mutex_lock(&tab->check);
+			if (current_time() - tab->philos[i].last_meal > (size_t)tab->time_to_starve)
+			{
+				display_message(&tab->philos[i], MESSAGE_DEATH);
+				tab->dead = 1;
+			}
+			pthread_mutex_unlock(&tab->check);
+			usleep(100);
+		}
+		if (tab->dead)
+			break ;
+		i = 0;
+		while (tab->number_of_meals != -1 && i < tab->number_of_philos
+			&& tab->philos[i].times_eaten >= tab->number_of_meals)
+			i++;
+		if (i == tab->number_of_philos)
+			tab->satiated = 1;
 	}
-	return (0);
 }
 
-int	initiate_mutexeses(t_var *var)
+void	exit_simulation(t_table *tab, pthread_t *threads)
 {
 	int	i;
 
-	i = 0;
-	while (i < var->num_phil)
-	{
-		if (pthread_mutex_init(&var->forks[i], NULL))
-			return (1);
-		i++;
-	}
-	if (pthread_mutex_init(var->meal, NULL))
-		return (1);
-	if (pthread_mutex_init(var->log, NULL))
-		return (1);
-	return (0);
+	i = -1;
+	while (++i < tab->number_of_philos)
+		pthread_join(threads[i], NULL);
+	i = -1;
+	while (++i < tab->number_of_philos)
+		pthread_mutex_destroy(&tab->philos[i].fork);
+	pthread_mutex_destroy(&tab->display);
+	pthread_mutex_destroy(&tab->check);
+	free(tab->philos);
+	free(threads);
 }
 
-void	fill_struct(int ac, char **av, t_var *var)
+size_t	current_time(void)
 {
-	var->num_phil = ft_atoi(av[1]);
-	var->time_to_die = ft_atoi(av[2]);
-	var->time_to_eat = ft_atoi(av[3]);
-	var->time_to_sleep = ft_atoi(av[4]);
-	var->must_eat_count = -1;
-	if (ac - 1 == 5)
-		var->must_eat_count = ft_atoi(av[5]);
-	var->time_of_death = 0;
-	var->index_of_the_phil_who_died = 0;
+	struct timeval	t;
+
+	gettimeofday(&t, NULL);
+	return ((t.tv_sec * 1000) + (t.tv_usec / 1000));
+}
+
+void	pass_time(t_table *tab, size_t time)
+{
+	size_t	t;
+
+	t = current_time();
+	while (!(tab->dead))
+	{
+		if (current_time() - t >= time)
+			break ;
+		usleep(100);
+	}
 }

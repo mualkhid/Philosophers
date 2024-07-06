@@ -10,91 +10,59 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "main.h"
+#include "philo_bonus.h"
 
-void	eat_statement(t_phil *phil)
+int	ft_isdigit(int c)
 {
-	pthread_t	thread;
-
-	if (phil->var->must_eat_meals)
-	{
-		if (pthread_create(&thread, NULL, ft_eat_checker, phil))
-		{
-			printf("Error creating thread\n");
-			exit(1);
-		}
-		pthread_detach(thread);
-	}
+	return (c >= '0' && c <= '9');
 }
 
-void	*ft_eat_checker(void *data)
+size_t	ft_strlen(const char *s)
 {
-	t_phil	*phil;
-	int		i;
+	size_t	cnt;
+
+	cnt = 0;
+	while (s[cnt])
+		cnt++;
+	return (cnt);
+}
+
+int	ft_strncmp(const char *s1, const char *s2, size_t n)
+{
+	size_t	i;
 
 	i = 0;
-	phil = (t_phil *)data;
-	while (i < phil->var->num_phil)
+	while (s1[i] && s2[i] && s1[i] == s2[i] && i < n)
+		i++;
+	if (i < n)
+		return ((unsigned char)s1[i] - (unsigned char)s2[i]);
+	else
+		return (0);
+}
+
+int	ft_atoi(const char *str)
+{
+	int					i;
+	int					sign;
+	unsigned long int	result;
+
+	i = 0;
+	sign = 1;
+	result = 0;
+	while (str[i] == 32 || (str[i] >= 9 && str[i] <= 13))
+		i++;
+	if (str[i] == '-')
 	{
-		sem_wait(phil->var->eat_enough);
+		sign = -1;
 		i++;
 	}
-	sem_post(phil->var->exit);
-	return (NULL);
-}
-
-void	*start(void *data)
-{
-	t_phil		*phil;
-	pthread_t	thread;
-
-	phil = (t_phil *)data;
-	if (pthread_create(&thread, NULL, &monitoring_pro, phil))
+	else if (str[i] == '+')
+		i++;
+	while (ft_isdigit(str[i]))
 	{
-		printf("Error creating thread\n");
-		exit(1);
+		result *= 10;
+		result += str[i] - '0';
+		i++;
 	}
-	pthread_detach(thread);
-	phil->meals_counter = 0;
-	while (1)
-		routine(phil);
-	return (NULL);
-}
-
-void	routine(t_phil *phil)
-{
-	sem_wait(phil->var->forks);
-	ft_log("has taken a fork", phil->identity, phil->var, NORMAL);
-	sem_wait(phil->var->forks);
-	ft_log("has taken a fork", phil->identity, phil->var, NORMAL);
-	phil->meals_counter++;
-	if (phil->meals_counter == phil->var->num_phil)
-		sem_post(phil->var->eat_enough);
-	phil->time_to_kill = get_time_in_ms() + phil->var->time_to_die;
-	ft_log("is eating", phil->identity, phil->var, NORMAL);
-	phil->last_eat = get_time_in_ms();
-	ft_sleep(phil->var->time_to_eat);
-	sem_post(phil->var->forks);
-	sem_post(phil->var->forks);
-	ft_log("is sleeping", phil->identity, phil->var, NORMAL);
-	ft_sleep(phil->var->time_to_sleep);
-	ft_log("is thinking", phil->identity, phil->var, NORMAL);
-}
-
-void	*monitoring_pro(void *data)
-{
-	t_phil	*phil;
-
-	phil = (t_phil *)data;
-	while (1)
-	{
-		if (get_time_in_ms() - phil->last_eat >= (long)phil->var->time_to_die)
-		{
-			sem_wait(phil->var->dead_sem);
-			ft_log("died", phil->identity, phil->var, DIED);
-			sem_post(phil->var->exit);
-			break ;
-		}
-	}
-	return (NULL);
+	return (result * sign);
 }

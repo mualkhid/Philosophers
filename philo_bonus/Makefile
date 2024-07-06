@@ -12,18 +12,22 @@
 
 NAME = philo_bonus.a
 CFLAGS = -Wall -Wextra -Werror
+LDFLAGS = -lpthread
 RM = rm -f
-SRC = initiate.c main.c parcing.c start_simulation.c time.c utils.c
+SRC = initiate.c philo.c parsing.c time.c utils.c
 
 OBJ = ${SRC:.c=.o}
 
 all : $(NAME)
 
-$(NAME) : $(OBJ) main.h
+$(NAME) : $(OBJ) philo_bonus.h
 	@ar rc $(NAME) $(OBJ)
-	@$(CC) $(CFLAGS) main.c $(NAME) -o philo_bonus
+	@$(CC) $(CFLAGS) philo.c $(NAME) -o philo_bonus $(LDFLAGS)
+
 clean :
 	@${RM} ${OBJ} ${NAME}
+
 fclean : clean
 	@${RM} philo_bonus
+
 re : fclean all
