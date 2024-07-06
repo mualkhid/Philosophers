@@ -6,7 +6,7 @@
 /*   By: mualkhid <mualkhid@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/05 15:44:24 by mualkhid          #+#    #+#             */
-/*   Updated: 2024/07/05 15:44:25 by mualkhid         ###   ########.fr       */
+/*   Updated: 2024/07/06 17:18:04 by mualkhid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,19 +75,19 @@ static void	initialize(t_table *tab)
 
 	tab->dead = 0;
 	tab->satiated = 0;
-	tab->philos = (t_philo *)malloc(tab->number_of_philos * sizeof(t_philo));
+	tab->philos = (t_philo *)malloc(tab->num_philos * sizeof(t_philo));
 	i = -1;
-	while (++i < tab->number_of_philos)
+	while (++i < tab->num_philos)
 	{
 		tab->philos[i].id = i + 1;
 		tab->philos[i].table = tab;
 		tab->philos[i].times_eaten = 0;
-		if (i + 1 == tab->number_of_philos)
+		if (i + 1 == tab->num_philos)
 			tab->philos[i].next = &tab->philos[0];
 		else
 			tab->philos[i].next = &tab->philos[i + 1];
 		if (i == 0)
-			tab->philos[i].prev = &tab->philos[tab->number_of_philos - 1];
+			tab->philos[i].prev = &tab->philos[tab->num_philos - 1];
 		else
 			tab->philos[i].prev = &tab->philos[i - 1];
 		pthread_mutex_init(&tab->philos[i].fork, NULL);
@@ -100,7 +100,7 @@ int	verify_args(int argc, char *argv[], t_table *tab)
 {
 	if (validate_args(argc, argv))
 		return (1);
-	tab->number_of_philos = ft_atoi(argv[1]);
+	tab->num_philos = ft_atoi(argv[1]);
 	tab->time_to_starve = ft_atoi(argv[2]);
 	tab->time_to_eat = ft_atoi(argv[3]);
 	tab->time_to_sleep = ft_atoi(argv[4]);

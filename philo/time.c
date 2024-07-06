@@ -6,11 +6,12 @@
 /*   By: mualkhid <mualkhid@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/05 15:44:56 by mualkhid          #+#    #+#             */
-/*   Updated: 2024/07/05 15:44:57 by mualkhid         ###   ########.fr       */
+/*   Updated: 2024/07/06 17:18:04 by mualkhid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philo.h"
+
 static char	*get_message(int message)
 {
 	if (message == MESSAGE_FORK)
@@ -30,7 +31,7 @@ void	display_message(t_philo *philo, int message)
 {
 	size_t	t;
 
-	t = current_time() - philo->table->t_0;
+	t = get_current_time() - philo->table->start_time;
 	pthread_mutex_lock(&philo->table->display);
 	if (!philo->table->dead && !philo->table->satiated)
 	{
@@ -49,9 +50,9 @@ static void	philo_eat(t_philo *philo)
 	table = philo->table;
 	pthread_mutex_lock(&philo->fork);
 	display_message(philo, MESSAGE_FORK);
-	if (philo->table->number_of_philos == 1)
+	if (philo->table->num_philos == 1)
 	{
-		pass_time(table, table->time_to_starve);
+		wait_time(table, table->time_to_starve);
 		display_message(philo, MESSAGE_DEATH);
 		pthread_mutex_unlock(&philo->fork);
 		table->dead = 1;
@@ -62,9 +63,9 @@ static void	philo_eat(t_philo *philo)
 	pthread_mutex_lock(&table->check);
 	philo->times_eaten++;
 	display_message(philo, MESSAGE_EAT);
-	philo->last_meal = current_time();
+	philo->last_meal = get_current_time();
 	pthread_mutex_unlock(&table->check);
-	pass_time(table, table->time_to_eat);
+	wait_time(table, table->time_to_eat);
 	pthread_mutex_unlock(&philo->fork);
 	pthread_mutex_unlock(&philo->next->fork);
 }
@@ -82,7 +83,7 @@ void	*life(void *arg)
 	{
 		philo_eat(philo);
 		display_message(philo, MESSAGE_SLEEP);
-		pass_time(table, table->time_to_sleep);
+		wait_time(table, table->time_to_sleep);
 		display_message(philo, MESSAGE_THINK);
 	}
 	return (NULL);

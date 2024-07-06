@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   main.c                                             :+:      :+:    :+:   */
+/*   philo.c                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: mualkhid <mualkhid@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/05 15:44:12 by mualkhid          #+#    #+#             */
-/*   Updated: 2024/07/05 15:44:13 by mualkhid         ###   ########.fr       */
+/*   Updated: 2024/07/06 17:18:04 by mualkhid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,10 +26,10 @@ int	main(int argc, char *argv[])
 
 	if ((argc < 5 || argc > 6) || verify_args(argc, argv, &tab))
 		return (error());
-	threads = (pthread_t *)malloc(tab.number_of_philos * sizeof(pthread_t));
-	tab.t_0 = current_time();
+	threads = (pthread_t *)malloc(tab.num_philos * sizeof(pthread_t));
+	tab.start_time = get_current_time();
 	i = -1;
-	while (++i < tab.number_of_philos)
+	while (++i < tab.num_philos)
 	{
 		if (pthread_create(&threads[i], NULL, &life, &tab.philos[i]))
 		{
@@ -39,7 +39,7 @@ int	main(int argc, char *argv[])
 			return (1);
 		}
 		pthread_mutex_lock(&tab.check);
-		tab.philos[i].last_meal = tab.t_0;
+		tab.philos[i].last_meal = tab.start_time;
 		pthread_mutex_unlock(&tab.check);
 	}
 	check_death(&tab);
