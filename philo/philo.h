@@ -46,7 +46,7 @@ typedef struct s_table
 	int				time_to_sleep;
 	int				number_of_meals;
 	int				num_philos;
-	int				satiated;
+	int				full;
 	int				dead;
 	size_t			start_time;
 	t_philo			*philos;
@@ -65,5 +65,6 @@ void				check_death(t_table *tab);
 void				exit_simulation(t_table *tab, pthread_t *threads);
 size_t				get_current_time(void);
 void				wait_time(t_table *tab, size_t time);
+void				initialize(t_table *tab);
 
 #endif

@@ -59,7 +59,7 @@ static void	initialize(t_table *tab)
 	int	i;
 
 	tab->dead = 0;
-	tab->satiated = 0;
+	tab->full = 0;
 	tab->philos = (t_philo *)malloc(tab->num_philos * sizeof(t_philo));
 	i = -1;
 	while (++i < tab->num_philos)

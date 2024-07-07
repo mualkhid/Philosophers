@@ -12,79 +12,69 @@
 
 #include "philo.h"
 
-static char	*get_message(int message)
+void	check_death(t_table *tab)
 {
-	if (message == MESSAGE_FORK)
-		return ("has taken a fork");
-	if (message == MESSAGE_EAT)
-		return ("is eating");
-	if (message == MESSAGE_SLEEP)
-		return ("is sleeping");
-	if (message == MESSAGE_THINK)
-		return ("is thinking");
-	if (message == MESSAGE_DEATH)
-		return ("died");
-	return ("Error: not valid msg id");
+	int	i;
+
+	while (!tab->full)
+	{
+		i = -1;
+		while (!tab->dead && ++i < tab->num_philos)
+		{
+			pthread_mutex_lock(&tab->check);
+			if (get_current_time()
+				- tab->philos[i].last_meal > (size_t)tab->time_to_starve)
+			{
+				display_message(&tab->philos[i], MESSAGE_DEATH);
+				tab->dead = 1;
+			}
+			pthread_mutex_unlock(&tab->check);
+			usleep(100);
+		}
+		if (tab->dead)
+			break ;
+		i = 0;
+		while (tab->number_of_meals != -1 && i++ < tab->num_philos
+			&& tab->philos[i].times_eaten >= tab->number_of_meals)
+			i++;
+		if (i == tab->num_philos)
+			tab->full = 1;
+	}
 }
 
-void	display_message(t_philo *philo, int message)
+void	exit_simulation(t_table *tab, pthread_t *threads)
+{
+	int	i;
+
+	i = -1;
+	while (++i < tab->num_philos)
+		pthread_join(threads[i], NULL);
+	i = -1;
+	while (++i < tab->num_philos)
+		pthread_mutex_destroy(&tab->philos[i].fork);
+	pthread_mutex_destroy(&tab->display);
+	pthread_mutex_destroy(&tab->check);
+	free(tab->philos);
+	free(threads);
+}
+
+size_t	get_current_time(void)
+{
+	struct timeval	t;
+
+	gettimeofday(&t, NULL);
+	return ((t.tv_sec * 1000) + (t.tv_usec / 1000));
+}
+
+void	wait_time(t_table *tab, size_t time)
 {
 	size_t	t;
 
-	t = get_current_time() - philo->table->start_time;
-	pthread_mutex_lock(&philo->table->display);
-	if (!philo->table->dead && !philo->table->satiated)
+	t = get_current_time();
+	while (!(tab->dead))
 	{
-		printf("%ld ", t);
-		printf(" %d ", philo->id);
-		printf("%s", get_message(message));
-		printf("\n");
+		if (get_current_time() - t >= time)
+			break ;
+		usleep(100);
 	}
-	pthread_mutex_unlock(&philo->table->display);
-}
-
-static void	philo_eat(t_philo *philo)
-{
-	t_table	*table;
-
-	table = philo->table;
-	pthread_mutex_lock(&philo->fork);
-	display_message(philo, MESSAGE_FORK);
-	if (philo->table->num_philos == 1)
-	{
-		wait_time(table, table->time_to_starve);
-		display_message(philo, MESSAGE_DEATH);
-		pthread_mutex_unlock(&philo->fork);
-		table->dead = 1;
-		return ;
-	}
-	pthread_mutex_lock(&philo->next->fork);
-	display_message(philo, MESSAGE_FORK);
-	pthread_mutex_lock(&table->check);
-	philo->times_eaten++;
-	display_message(philo, MESSAGE_EAT);
-	philo->last_meal = get_current_time();
-	pthread_mutex_unlock(&table->check);
-	wait_time(table, table->time_to_eat);
-	pthread_mutex_unlock(&philo->fork);
-	pthread_mutex_unlock(&philo->next->fork);
-}
-
-void	*life(void *arg)
-{
-	t_philo	*philo;
-	t_table	*table;
-
-	philo = (t_philo *)arg;
-	table = philo->table;
-	if (philo->id % 2 == 0)
-		usleep(1000);
-	while (!table->dead && !table->satiated)
-	{
-		philo_eat(philo);
-		display_message(philo, MESSAGE_SLEEP);
-		wait_time(table, table->time_to_sleep);
-		display_message(philo, MESSAGE_THINK);
-	}
-	return (NULL);
 }

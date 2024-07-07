@@ -52,7 +52,7 @@ typedef struct s_table
 	int				time_to_sleep;
 	int				number_of_meals;
 	int				num_philos;
-	int				satiated;
+	int				full;
 	int				dead;
 	size_t			start_time;
 	t_philo			*philos;

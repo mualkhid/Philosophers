@@ -33,7 +33,7 @@ void	display_message(t_philo *philo, int message)
 
 	t = get_current_time() - philo->table->start_time;
 	sem_wait(philo->table->display);
-	if (!philo->table->dead && !philo->table->satiated)
+	if (!philo->table->dead && !philo->table->full)
 	{
 		printf("%6ld", t);
 		printf(" %3d ", philo->id);

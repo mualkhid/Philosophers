@@ -12,69 +12,106 @@
 
 #include "philo.h"
 
-void	check_death(t_table *tab)
+void	initialize(t_table *tab)
 {
 	int	i;
 
-	while (!tab->satiated)
+	tab->dead = 0;
+	tab->full = 0;
+	tab->philos = (t_philo *)malloc(tab->num_philos * sizeof(t_philo));
+	i = -1;
+	while (++i < tab->num_philos)
 	{
-		i = -1;
-		while (!tab->dead && ++i < tab->num_philos)
-		{
-			pthread_mutex_lock(&tab->check);
-			if (get_current_time()
-				- tab->philos[i].last_meal > (size_t)tab->time_to_starve)
-			{
-				display_message(&tab->philos[i], MESSAGE_DEATH);
-				tab->dead = 1;
-			}
-			pthread_mutex_unlock(&tab->check);
-			usleep(100);
-		}
-		if (tab->dead)
-			break ;
-		i = 0;
-		while (tab->number_of_meals != -1 && i++ < tab->num_philos
-			&& tab->philos[i].times_eaten >= tab->number_of_meals)
-			i++;
-		if (i == tab->num_philos)
-			tab->satiated = 1;
+		tab->philos[i].id = i + 1;
+		tab->philos[i].table = tab;
+		tab->philos[i].times_eaten = 0;
+		if (i + 1 == tab->num_philos)
+			tab->philos[i].next = &tab->philos[0];
+		else
+			tab->philos[i].next = &tab->philos[i + 1];
+		if (i == 0)
+			tab->philos[i].prev = &tab->philos[tab->num_philos - 1];
+		else
+			tab->philos[i].prev = &tab->philos[i - 1];
+		pthread_mutex_init(&tab->philos[i].fork, NULL);
 	}
+	pthread_mutex_init(&tab->display, NULL);
+	pthread_mutex_init(&tab->check, NULL);
 }
 
-void	exit_simulation(t_table *tab, pthread_t *threads)
+static char	*get_message(int message)
 {
-	int	i;
-
-	i = -1;
-	while (++i < tab->num_philos)
-		pthread_join(threads[i], NULL);
-	i = -1;
-	while (++i < tab->num_philos)
-		pthread_mutex_destroy(&tab->philos[i].fork);
-	pthread_mutex_destroy(&tab->display);
-	pthread_mutex_destroy(&tab->check);
-	free(tab->philos);
-	free(threads);
+	if (message == MESSAGE_FORK)
+		return ("has taken a fork");
+	if (message == MESSAGE_EAT)
+		return ("is eating");
+	if (message == MESSAGE_SLEEP)
+		return ("is sleeping");
+	if (message == MESSAGE_THINK)
+		return ("is thinking");
+	if (message == MESSAGE_DEATH)
+		return ("died");
+	return ("Error: not valid msg id");
 }
 
-size_t	get_current_time(void)
-{
-	struct timeval	t;
-
-	gettimeofday(&t, NULL);
-	return ((t.tv_sec * 1000) + (t.tv_usec / 1000));
-}
-
-void	wait_time(t_table *tab, size_t time)
+void	display_message(t_philo *philo, int message)
 {
 	size_t	t;
 
-	t = get_current_time();
-	while (!(tab->dead))
+	t = get_current_time() - philo->table->start_time;
+	pthread_mutex_lock(&philo->table->display);
+	if (!philo->table->dead && !philo->table->full)
 	{
-		if (get_current_time() - t >= time)
-			break ;
-		usleep(100);
+		printf("%ld ", t);
+		printf(" %d ", philo->id);
+		printf("%s", get_message(message));
+		printf("\n");
 	}
+	pthread_mutex_unlock(&philo->table->display);
+}
+
+static void	philo_eat(t_philo *philo)
+{
+	t_table	*table;
+
+	table = philo->table;
+	pthread_mutex_lock(&philo->fork);
+	display_message(philo, MESSAGE_FORK);
+	if (philo->table->num_philos == 1)
+	{
+		wait_time(table, table->time_to_starve);
+		display_message(philo, MESSAGE_DEATH);
+		pthread_mutex_unlock(&philo->fork);
+		table->dead = 1;
+		return ;
+	}
+	pthread_mutex_lock(&philo->next->fork);
+	display_message(philo, MESSAGE_FORK);
+	pthread_mutex_lock(&table->check);
+	philo->times_eaten++;
+	display_message(philo, MESSAGE_EAT);
+	philo->last_meal = get_current_time();
+	pthread_mutex_unlock(&table->check);
+	wait_time(table, table->time_to_eat);
+	pthread_mutex_unlock(&philo->fork);
+	pthread_mutex_unlock(&philo->next->fork);
+}
+
+void	*life(void *arg)
+{
+	t_philo	*philo;
+	t_table	*table;
+
+	philo = (t_philo *)arg;
+	table = philo->table;
+	if (philo->id % 2 == 0)
+		usleep(1000);
+	while (!table->dead && !table->full)
+	{
+		philo_eat(philo);
+		display_message(philo, MESSAGE_SLEEP);
+		wait_time(table, table->time_to_sleep);
+		display_message(philo, MESSAGE_THINK);
+	}
+	return (NULL);
 }

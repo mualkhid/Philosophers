@@ -69,33 +69,6 @@ static int	validate_args(int argc, char *argv[])
 	return (0);
 }
 
-static void	initialize(t_table *tab)
-{
-	int	i;
-
-	tab->dead = 0;
-	tab->satiated = 0;
-	tab->philos = (t_philo *)malloc(tab->num_philos * sizeof(t_philo));
-	i = -1;
-	while (++i < tab->num_philos)
-	{
-		tab->philos[i].id = i + 1;
-		tab->philos[i].table = tab;
-		tab->philos[i].times_eaten = 0;
-		if (i + 1 == tab->num_philos)
-			tab->philos[i].next = &tab->philos[0];
-		else
-			tab->philos[i].next = &tab->philos[i + 1];
-		if (i == 0)
-			tab->philos[i].prev = &tab->philos[tab->num_philos - 1];
-		else
-			tab->philos[i].prev = &tab->philos[i - 1];
-		pthread_mutex_init(&tab->philos[i].fork, NULL);
-	}
-	pthread_mutex_init(&tab->display, NULL);
-	pthread_mutex_init(&tab->check, NULL);
-}
-
 int	verify_args(int argc, char *argv[], t_table *tab)
 {
 	if (validate_args(argc, argv))
