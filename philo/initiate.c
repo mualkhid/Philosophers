@@ -54,6 +54,24 @@ static char	*get_message(int message)
 	return ("Error: not valid msg id");
 }
 
+// void display_message(t_philo *philo, int message)
+// {
+//     size_t t;
+
+//     pthread_mutex_lock(&philo->table->check); // Lock before accessing shared data
+//     if (!philo->table->dead && !philo->table->full)
+//     {
+//         t = get_current_time() - philo->table->start_time;
+//         pthread_mutex_lock(&philo->table->display);
+//         printf("%ld ", t);
+//         printf(" %d ", philo->id);
+//         printf("%s", get_message(message));
+//         printf("\n");
+//         pthread_mutex_unlock(&philo->table->display);
+//     }
+//     pthread_mutex_unlock(&philo->table->check); // Unlock after accessing shared data
+// }
+
 void	display_message(t_philo *philo, int message)
 {
 	size_t	t;
@@ -69,6 +87,8 @@ void	display_message(t_philo *philo, int message)
 	}
 	pthread_mutex_unlock(&philo->table->display);
 }
+
+
 
 static void	philo_eat(t_philo *philo)
 {
@@ -99,19 +119,92 @@ static void	philo_eat(t_philo *philo)
 
 void	*life(void *arg)
 {
-	t_philo	*philo;
-	t_table	*table;
+    t_philo	*philo;
+    t_table	*table;
 
-	philo = (t_philo *)arg;
-	table = philo->table;
-	if (philo->id % 2 == 0)
-		usleep(1000);
-	while (!table->dead && !table->full)
-	{
-		philo_eat(philo);
-		display_message(philo, MESSAGE_SLEEP);
-		wait_time(table, table->time_to_sleep);
-		display_message(philo, MESSAGE_THINK);
-	}
-	return (NULL);
+    philo = (t_philo *)arg;
+    table = philo->table;
+    if (philo->id % 2 == 0)
+        usleep(1000);
+    while (1)
+    {
+        pthread_mutex_lock(&table->check); // Lock before checking shared data
+        if (table->dead || table->full)
+        {
+            pthread_mutex_unlock(&table->check); // Unlock after checking
+            break;
+        }
+        pthread_mutex_unlock(&table->check); // Unlock after checking
+
+        philo_eat(philo); // Assuming philo_eat handles its own synchronization
+
+        pthread_mutex_lock(&table->check); // Lock before accessing shared data
+        if (!table->dead && !table->full)
+            display_message(philo, MESSAGE_SLEEP);
+        pthread_mutex_unlock(&table->check); // Unlock after accessing
+
+        wait_time(table, table->time_to_sleep); // Assuming wait_time handles its own synchronization
+
+        pthread_mutex_lock(&table->check); // Lock before accessing shared data
+        if (!table->dead && !table->full)
+            display_message(philo, MESSAGE_THINK);
+        pthread_mutex_unlock(&table->check); // Unlock after accessing
+    }
+    return (NULL);
 }
+
+// void	*life(void *arg)
+// {
+// 	t_philo	*philo;
+// 	t_table	*table;
+
+// 	philo = (t_philo *)arg;
+// 	table = philo->table;
+// 	if (philo->id % 2 == 0)
+// 		usleep(1000);
+// 	while (!table->dead && !table->full)
+// 	{
+// 		philo_eat(philo);
+// 		display_message(philo, MESSAGE_SLEEP);
+// 		wait_time(table, table->time_to_sleep);
+// 		display_message(philo, MESSAGE_THINK);
+// 	}
+// 	return (NULL);
+// }
+
+
+// void *life(void *arg) {
+//     t_philo *philo = (t_philo *)arg;
+//     t_table *table = philo->table;
+
+//     if (philo->id % 2 == 0)
+//         usleep(1000);
+
+//     while (1) {
+//         // Lock the mutex before accessing shared data
+//         pthread_mutex_lock(&table->check);
+//         if (table->dead || table->full) {
+//             pthread_mutex_unlock(&table->check);
+//             break;
+//         }
+//         pthread_mutex_unlock(&table->check);
+
+//         philo_eat(philo);
+
+//         // Lock the mutex before displaying messages or accessing shared data
+//         pthread_mutex_lock(&table->check);
+//         if (!table->dead && !table->full)
+//             display_message(philo, MESSAGE_SLEEP);
+//         pthread_mutex_unlock(&table->check);
+
+//         wait_time(table, table->time_to_sleep);
+
+//         // Lock the mutex before displaying messages or accessing shared data
+//         pthread_mutex_lock(&table->check);
+//         if (!table->dead && !table->full)
+//             display_message(philo, MESSAGE_THINK);
+//         pthread_mutex_unlock(&table->check);
+//     }
+
+//     return (NULL);
+// }

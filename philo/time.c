@@ -12,35 +12,68 @@
 
 #include "philo.h"
 
-void	check_death(t_table *tab)
+void check_death(t_table *tab)
 {
-	int	i;
+    int i;
 
-	while (!tab->full)
-	{
-		i = -1;
-		while (!tab->dead && ++i < tab->num_philos)
-		{
-			pthread_mutex_lock(&tab->check);
-			if (get_current_time()
-				- tab->philos[i].last_meal > (size_t)tab->time_to_starve)
-			{
-				display_message(&tab->philos[i], MESSAGE_DEATH);
-				tab->dead = 1;
-			}
-			pthread_mutex_unlock(&tab->check);
-			usleep(100);
-		}
-		if (tab->dead)
-			break ;
-		i = 0;
-		while (tab->number_of_meals != -1 && i++ < tab->num_philos
-			&& tab->philos[i].times_eaten >= tab->number_of_meals)
-			i++;
-		if (i == tab->num_philos)
-			tab->full = 1;
-	}
+    while (!tab->full)
+    {
+        i = -1;
+        while (++i < tab->num_philos)
+        {
+            pthread_mutex_lock(&tab->check);
+            if (get_current_time() - tab->philos[i].last_meal > (size_t)tab->time_to_starve)
+            {
+                display_message(&tab->philos[i], MESSAGE_DEATH);
+                tab->dead = 1;
+            }
+            pthread_mutex_unlock(&tab->check);
+            usleep(100);
+        }
+        if (tab->dead)
+            break;
+        i = 0;
+        pthread_mutex_lock(&tab->check);
+        while (tab->number_of_meals != -1 && i < tab->num_philos
+               && tab->philos[i].times_eaten >= tab->number_of_meals)
+        {
+            i++;
+        }
+        if (i == tab->num_philos)
+            tab->full = 1;
+        pthread_mutex_unlock(&tab->check);
+    }
 }
+
+// void	check_death(t_table *tab)
+// {
+// 	int	i;
+
+// 	while (!tab->full)
+// 	{
+// 		i = -1;
+// 		while (!tab->dead && ++i < tab->num_philos)
+// 		{
+// 			pthread_mutex_lock(&tab->check);
+// 			if (get_current_time()
+// 				- tab->philos[i].last_meal > (size_t)tab->time_to_starve)
+// 			{
+// 				display_message(&tab->philos[i], MESSAGE_DEATH);
+// 				tab->dead = 1;
+// 			}
+// 			pthread_mutex_unlock(&tab->check);
+// 			usleep(100);
+// 		}
+// 		if (tab->dead)
+// 			break ;
+// 		i = 0;
+// 		while (tab->number_of_meals != -1 && i++ < tab->num_philos
+// 			&& tab->philos[i].times_eaten >= tab->number_of_meals)
+// 			i++;
+// 		if (i == tab->num_philos)
+// 			tab->full = 1;
+// 	}
+// }
 
 void	exit_simulation(t_table *tab, pthread_t *threads)
 {
