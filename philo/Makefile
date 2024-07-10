@@ -10,13 +10,12 @@
 #                                                                              #
 # **************************************************************************** #
 
-
 NAME = philo.a
 CFLAGS = -Wall -Wextra -Werror
 LDFLAGS = -lpthread
 
 RM = rm -f
-SRC = utils.c initiate.c philo.c parsing.c time.c
+SRC = exit.c philo_utils.c print.c utils.c initiate.c philo.c parsing.c time.c
 
 OBJ = ${SRC:.c=.o}
 

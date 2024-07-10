@@ -12,102 +12,44 @@
 
 #include "philo.h"
 
-void check_death(t_table *tab)
+/* get_time_in_ms:
+*	Gets the current time in miliseconds since the Epoch (1970-01-01 00:00:00).
+*	Returns the time value.
+*/
+time_t	get_time_in_ms(void)
 {
-    int i;
+	struct timeval		tv;
 
-    while (!tab->full)
-    {
-        i = -1;
-        while (++i < tab->num_philos)
-        {
-            pthread_mutex_lock(&tab->check);
-            if (get_current_time() - tab->philos[i].last_meal > (size_t)tab->time_to_starve)
-            {
-                display_message(&tab->philos[i], MESSAGE_DEATH);
-                tab->dead = 1;
-            }
-            pthread_mutex_unlock(&tab->check);
-            usleep(100);
-        }
-        if (tab->dead)
-            break;
-        i = 0;
-        pthread_mutex_lock(&tab->check);
-        while (tab->number_of_meals != -1 && i < tab->num_philos
-               && tab->philos[i].times_eaten >= tab->number_of_meals)
-        {
-            i++;
-        }
-        if (i == tab->num_philos)
-            tab->full = 1;
-        pthread_mutex_unlock(&tab->check);
-    }
+	gettimeofday(&tv, NULL);
+	return ((tv.tv_sec * 1000) + (tv.tv_usec / 1000));
 }
 
-// void	check_death(t_table *tab)
-// {
-// 	int	i;
-
-// 	while (!tab->full)
-// 	{
-// 		i = -1;
-// 		while (!tab->dead && ++i < tab->num_philos)
-// 		{
-// 			pthread_mutex_lock(&tab->check);
-// 			if (get_current_time()
-// 				- tab->philos[i].last_meal > (size_t)tab->time_to_starve)
-// 			{
-// 				display_message(&tab->philos[i], MESSAGE_DEATH);
-// 				tab->dead = 1;
-// 			}
-// 			pthread_mutex_unlock(&tab->check);
-// 			usleep(100);
-// 		}
-// 		if (tab->dead)
-// 			break ;
-// 		i = 0;
-// 		while (tab->number_of_meals != -1 && i++ < tab->num_philos
-// 			&& tab->philos[i].times_eaten >= tab->number_of_meals)
-// 			i++;
-// 		if (i == tab->num_philos)
-// 			tab->full = 1;
-// 	}
-// }
-
-void	exit_simulation(t_table *tab, pthread_t *threads)
+/* philo_sleep:
+*	Pauses the philosopher thread for a certain amount of time in miliseconds.
+*	Periodically checks to see if the simulation has ended during the sleep
+*	time and cuts the sleep short if it has.
+*/
+void	philo_sleep(t_table *table, time_t sleep_time)
 {
-	int	i;
+	time_t	wake_up;
 
-	i = -1;
-	while (++i < tab->num_philos)
-		pthread_join(threads[i], NULL);
-	i = -1;
-	while (++i < tab->num_philos)
-		pthread_mutex_destroy(&tab->philos[i].fork);
-	pthread_mutex_destroy(&tab->display);
-	pthread_mutex_destroy(&tab->check);
-	free(tab->philos);
-	free(threads);
-}
-
-size_t	get_current_time(void)
-{
-	struct timeval	t;
-
-	gettimeofday(&t, NULL);
-	return ((t.tv_sec * 1000) + (t.tv_usec / 1000));
-}
-
-void	wait_time(t_table *tab, size_t time)
-{
-	size_t	t;
-
-	t = get_current_time();
-	while (!(tab->dead))
+	wake_up = get_time_in_ms() + sleep_time;
+	while (get_time_in_ms() < wake_up)
 	{
-		if (get_current_time() - t >= time)
+		if (has_simulation_stopped(table))
 			break ;
 		usleep(100);
 	}
+}
+
+/* sim_start_delay:
+*	Waits for a small delay at the beginning of each threads execution
+*	so that all threads start at the same time with the same start time
+*	reference. This ensures the grim reaper thread is synchronized with
+*	the philosopher threads.
+*/
+void	sim_start_delay(time_t start_time)
+{
+	while (get_time_in_ms() < start_time)
+		continue ;
 }

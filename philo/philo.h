@@ -14,57 +14,117 @@
 # define PHILO_H
 
 # include <pthread.h>
+# include <limits.h>
+# include <unistd.h>
 # include <stdio.h>
 # include <stdlib.h>
 # include <sys/time.h>
-# include <unistd.h>
+# include <stdbool.h>
 
-enum				e_msg
-{
-	MESSAGE_FORK = 0,
-	MESSAGE_EAT,
-	MESSAGE_SLEEP,
-	MESSAGE_THINK,
-	MESSAGE_DEATH
-};
+/******************************************************************************
+*                                     Macros                                  *
+******************************************************************************/
 
-typedef struct s_philo
-{
-	int				id;
-	int				times_eaten;
-	size_t			last_meal;
-	pthread_mutex_t	fork;
-	struct s_philo	*next;
-	struct s_philo	*prev;
-	struct s_table	*table;
-}					t_philo;
+# define MAX_PHILOS	250
+# define STR_MAX_PHILOS "250"
+
+# ifndef DEBUG_FORMATTING
+#  define DEBUG_FORMATTING 1
+# endif
+
+# define NC		"\e[0m"
+# define RED	"\e[31m"
+# define GREEN	"\e[32m"
+# define PURPLE	"\e[35m"
+# define CYAN	"\e[36m"
+
+# define STR_PROG_NAME	"philo:"
+# define STR_USAGE	"%s usage: ./philo <number_of_philosophers> \
+<time_to_die> <time_to_eat> <time_to_sleep> \
+[number_of_times_each_philosopher_must_eat]\n"
+# define STR_ERR_INPUT_DIGIT	"%s invalid input: %s: \
+not a valid unsigned integer between 0 and 2147483647.\n"
+# define STR_ERR_INPUT_POFLOW	"%s invalid input: \
+there must be between 1 and %s philosophers.\n"
+# define STR_ERR_THREAD	"%s error: Could not create thread.\n"
+# define STR_ERR_MALLOC	"%s error: Could not allocate memory.\n"
+# define STR_ERR_MUTEX	"%s error: Could not create mutex.\n"
+
+/******************************************************************************
+*                                 Structures                                  *
+******************************************************************************/
+
+typedef struct s_philo	t_philo;
 
 typedef struct s_table
 {
-	int				time_to_starve;
-	int				time_to_eat;
-	int				time_to_sleep;
-	int				number_of_meals;
-	int				num_philos;
-	int				full;
-	int				dead;
-	size_t			start_time;
-	t_philo			*philos;
-	pthread_mutex_t	display;
-	pthread_mutex_t	check;
-}					t_table;
+	time_t			start_time;
+	unsigned int	nb_philos;
+	pthread_t		check_death;
+	time_t			time_to_die;
+	time_t			time_to_eat;
+	time_t			time_to_sleep;
+	int				must_eat_count;
+	bool			sim_stop;
+	pthread_mutex_t	sim_stop_lock;
+	pthread_mutex_t	write_lock;
+	pthread_mutex_t	*fork_locks;
+	t_philo			**philos;
+}	t_table;
 
-int					ft_isdigit(int c);
-size_t				ft_strlen(const char *s);
-int					ft_strncmp(const char *s1, const char *s2, size_t n);
-int					ft_atoi(const char *str);
-int					verify_args(int argc, char *argv[], t_table *tab);
-void				display_message(t_philo *philo, int message);
-void				*life(void *arg);
-void				check_death(t_table *tab);
-void				exit_simulation(t_table *tab, pthread_t *threads);
-size_t				get_current_time(void);
-void				wait_time(t_table *tab, size_t time);
-void				initialize(t_table *tab);
+typedef struct s_philo
+{
+	pthread_t			thread;
+	unsigned int		id;
+	unsigned int		times_ate;
+	unsigned int		fork[2];
+	pthread_mutex_t		meal_time_lock;
+	time_t				last_meal;
+	t_table				*table;
+}	t_philo;
+
+typedef enum e_status
+{
+	DIED = 0,
+	EATING = 1,
+	SLEEPING = 2,
+	THINKING = 3,
+	GOT_FORK_1 = 4,
+	GOT_FORK_2 = 5
+}	t_status;
+
+/******************************************************************************
+*                           Function Prototypes                               *
+******************************************************************************/
+
+//	parsing.c
+bool			is_valid_input(int ac, char **av);
+int				ft_atoi(char *str);
+
+//	init.c
+t_table			*init_table(int ac, char **av, int i);
+
+//	routines.c
+void			*philosopher(void *data);
+
+//	time.c
+time_t			get_time_in_ms(void);
+void			philo_sleep(t_table *table, time_t sleep_time);
+void			sim_start_delay(time_t start_time);
+
+//	output.c
+void			write_status(t_philo *philo, bool reaper, t_status status);
+void			write_outcome(t_table *table);
+void			*error_null(char *str, char *details, t_table *table);
+int				message(char *str, char *detail, int exit_no);
+
+//	check_death.c
+void			*check_death(void *data);
+bool			has_simulation_stopped(t_table *table);
+
+//	exit.c
+int				error_failure(char *str, char *details, t_table *table);
+void			*free_table(t_table *table);
+void			destroy_mutexes(t_table *table);
 
 #endif

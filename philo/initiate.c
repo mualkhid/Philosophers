@@ -12,199 +12,133 @@
 
 #include "philo.h"
 
-void	initialize(t_table *tab)
+/* intit_forks:
+*	Allocates memory and initializes fork mutexes.
+*	Returns a pointer to the fork mutex array, or NULL if an error occured. 
+*/
+static pthread_mutex_t	*init_forks(t_table *table)
 {
-	int	i;
+	pthread_mutex_t	*forks;
+	unsigned int	i;
 
-	tab->dead = 0;
-	tab->full = 0;
-	tab->philos = (t_philo *)malloc(tab->num_philos * sizeof(t_philo));
-	i = -1;
-	while (++i < tab->num_philos)
+	forks = malloc(sizeof(pthread_mutex_t) * table->nb_philos);
+	if (!forks)
+		return (error_null(STR_ERR_MALLOC, NULL, 0));
+	i = 0;
+	while (i < table->nb_philos)
 	{
-		tab->philos[i].id = i + 1;
-		tab->philos[i].table = tab;
-		tab->philos[i].times_eaten = 0;
-		if (i + 1 == tab->num_philos)
-			tab->philos[i].next = &tab->philos[0];
-		else
-			tab->philos[i].next = &tab->philos[i + 1];
-		if (i == 0)
-			tab->philos[i].prev = &tab->philos[tab->num_philos - 1];
-		else
-			tab->philos[i].prev = &tab->philos[i - 1];
-		pthread_mutex_init(&tab->philos[i].fork, NULL);
+		if (pthread_mutex_init(&forks[i], 0) != 0)
+			return (error_null(STR_ERR_MUTEX, NULL, 0));
+		i++;
 	}
-	pthread_mutex_init(&tab->display, NULL);
-	pthread_mutex_init(&tab->check, NULL);
+	return (forks);
 }
 
-static char	*get_message(int message)
+/* assign_forks:
+*	Assigns two fork ids to each philosopher. Even-numbered philosophers
+*	get their fork order switched. This is because the order in which
+*	philosophers take their forks matters.
+*
+*	For example with 3 philos:
+*		Philo #1 (id: 0) will want fork 0 and fork 1
+*		Philo #2 (id: 1) will want fork 1 and fork 2
+*		Philo #3 (id: 2) will want fork 2 and fork 0
+*	If philo #1 takes fork 0, philo #2 takes fork 1 and philo #3 takes fork 2,
+*	there is a deadlock. Each will be waiting for their second fork which is
+*	in use by another philo.
+*
+*	Making even id philos "left-handed" helps:
+*		Philo #1 (id: 0) takes fork 1 and then fork 0
+*		Philo #2 (id: 1) takes fork 1 and then fork 2
+*		Philo #3 (id: 2) takes fork 0 and then fork 2
+*	Now, philo #1 takes fork 1, philo #3 takes fork 0 and philo #2 waits patiently.
+*	Fork 2 is free for philo #3 to take, so he eats. When he is done philo #1 can
+*	take fork 0 and eat. When he is done, philo #2 can finally get fork 1 and eat.
+*/
+static void	assign_forks(t_philo *philo)
 {
-	if (message == MESSAGE_FORK)
-		return ("has taken a fork");
-	if (message == MESSAGE_EAT)
-		return ("is eating");
-	if (message == MESSAGE_SLEEP)
-		return ("is sleeping");
-	if (message == MESSAGE_THINK)
-		return ("is thinking");
-	if (message == MESSAGE_DEATH)
-		return ("died");
-	return ("Error: not valid msg id");
-}
-
-// void display_message(t_philo *philo, int message)
-// {
-//     size_t t;
-
-//     pthread_mutex_lock(&philo->table->check); // Lock before accessing shared data
-//     if (!philo->table->dead && !philo->table->full)
-//     {
-//         t = get_current_time() - philo->table->start_time;
-//         pthread_mutex_lock(&philo->table->display);
-//         printf("%ld ", t);
-//         printf(" %d ", philo->id);
-//         printf("%s", get_message(message));
-//         printf("\n");
-//         pthread_mutex_unlock(&philo->table->display);
-//     }
-//     pthread_mutex_unlock(&philo->table->check); // Unlock after accessing shared data
-// }
-
-void	display_message(t_philo *philo, int message)
-{
-	size_t	t;
-
-	t = get_current_time() - philo->table->start_time;
-	pthread_mutex_lock(&philo->table->display);
-	if (!philo->table->dead && !philo->table->full)
+	philo->fork[0] = philo->id;
+	philo->fork[1] = (philo->id + 1) % philo->table->nb_philos;
+	if (philo->id % 2)
 	{
-		printf("%ld ", t);
-		printf(" %d ", philo->id);
-		printf("%s", get_message(message));
-		printf("\n");
+		philo->fork[0] = (philo->id + 1) % philo->table->nb_philos;
+		philo->fork[1] = philo->id;
 	}
-	pthread_mutex_unlock(&philo->table->display);
 }
 
+/* init_philos:
+*	Allocates memory for each philosopher and initializes their values.
+*	Returns a pointer to the array of philosophers or NULL if
+*	initialization failed.
+*/
+static t_philo	**init_philos(t_table *table)
+{
+	t_philo			**philos;
+	unsigned int	i;
 
+	philos = malloc(sizeof(t_philo) * table->nb_philos);
+	if (!philos)
+		return (error_null(STR_ERR_MALLOC, NULL, 0));
+	i = 0;
+	while (i < table->nb_philos)
+	{
+		philos[i] = malloc(sizeof(t_philo) * 1);
+		if (!philos[i])
+			return (error_null(STR_ERR_MALLOC, NULL, 0));
+		if (pthread_mutex_init(&philos[i]->meal_time_lock, 0) != 0)
+			return (error_null(STR_ERR_MUTEX, NULL, 0));
+		philos[i]->table = table;
+		philos[i]->id = i;
+		philos[i]->times_ate = 0;
+		assign_forks(philos[i]);
+		i++;
+	}
+	return (philos);
+}
 
-static void	philo_eat(t_philo *philo)
+/* init_global_mutexes:
+*	Initializes mutex locks for forks, writing and the stop simulation
+*	flag.
+*	Returns true if the initalizations were successful, false if
+*	initilization failed.
+*/
+static bool	init_global_mutexes(t_table *table)
+{
+	table->fork_locks = init_forks(table);
+	if (!table->fork_locks)
+		return (false);
+	if (pthread_mutex_init(&table->sim_stop_lock, 0) != 0)
+		return (error_failure(STR_ERR_MUTEX, NULL, table));
+	if (pthread_mutex_init(&table->write_lock, 0) != 0)
+		return (error_failure(STR_ERR_MUTEX, NULL, table));
+	return (true);
+}
+
+/* init_table:
+*	Initializes the "dining table", the data structure containing
+*	all of the program's parameters.
+*	Returns a pointer to the allocated table structure, or NULL if
+*	an error occured during initialization.
+*/
+t_table	*init_table(int ac, char **av, int i)
 {
 	t_table	*table;
 
-	table = philo->table;
-	pthread_mutex_lock(&philo->fork);
-	display_message(philo, MESSAGE_FORK);
-	if (philo->table->num_philos == 1)
-	{
-		wait_time(table, table->time_to_starve);
-		display_message(philo, MESSAGE_DEATH);
-		pthread_mutex_unlock(&philo->fork);
-		table->dead = 1;
-		return ;
-	}
-	pthread_mutex_lock(&philo->next->fork);
-	display_message(philo, MESSAGE_FORK);
-	pthread_mutex_lock(&table->check);
-	philo->times_eaten++;
-	display_message(philo, MESSAGE_EAT);
-	philo->last_meal = get_current_time();
-	pthread_mutex_unlock(&table->check);
-	wait_time(table, table->time_to_eat);
-	pthread_mutex_unlock(&philo->fork);
-	pthread_mutex_unlock(&philo->next->fork);
+	table = malloc(sizeof(t_table) * 1);
+	if (!table)
+		return (error_null(STR_ERR_MALLOC, NULL, 0));
+	table->nb_philos = ft_atoi(av[i++]);
+	table->time_to_die = ft_atoi(av[i++]);
+	table->time_to_eat = ft_atoi(av[i++]);
+	table->time_to_sleep = ft_atoi(av[i++]);
+	table->must_eat_count = -1;
+	if (ac - 1 == 5)
+		table->must_eat_count = ft_atoi(av[i]);
+	table->philos = init_philos(table);
+	if (!table->philos)
+		return (NULL);
+	if (!init_global_mutexes(table))
+		return (NULL);
+	table->sim_stop = false;
+	return (table);
 }
-
-void	*life(void *arg)
-{
-    t_philo	*philo;
-    t_table	*table;
-
-    philo = (t_philo *)arg;
-    table = philo->table;
-    if (philo->id % 2 == 0)
-        usleep(1000);
-    while (1)
-    {
-        pthread_mutex_lock(&table->check); // Lock before checking shared data
-        if (table->dead || table->full)
-        {
-            pthread_mutex_unlock(&table->check); // Unlock after checking
-            break;
-        }
-        pthread_mutex_unlock(&table->check); // Unlock after checking
-
-        philo_eat(philo); // Assuming philo_eat handles its own synchronization
-
-        pthread_mutex_lock(&table->check); // Lock before accessing shared data
-        if (!table->dead && !table->full)
-            display_message(philo, MESSAGE_SLEEP);
-        pthread_mutex_unlock(&table->check); // Unlock after accessing
-
-        wait_time(table, table->time_to_sleep); // Assuming wait_time handles its own synchronization
-
-        pthread_mutex_lock(&table->check); // Lock before accessing shared data
-        if (!table->dead && !table->full)
-            display_message(philo, MESSAGE_THINK);
-        pthread_mutex_unlock(&table->check); // Unlock after accessing
-    }
-    return (NULL);
-}
-
-// void	*life(void *arg)
-// {
-// 	t_philo	*philo;
-// 	t_table	*table;
-
-// 	philo = (t_philo *)arg;
-// 	table = philo->table;
-// 	if (philo->id % 2 == 0)
-// 		usleep(1000);
-// 	while (!table->dead && !table->full)
-// 	{
-// 		philo_eat(philo);
-// 		display_message(philo, MESSAGE_SLEEP);
-// 		wait_time(table, table->time_to_sleep);
-// 		display_message(philo, MESSAGE_THINK);
-// 	}
-// 	return (NULL);
-// }
-
-
-// void *life(void *arg) {
-//     t_philo *philo = (t_philo *)arg;
-//     t_table *table = philo->table;
-
-//     if (philo->id % 2 == 0)
-//         usleep(1000);
-
-//     while (1) {
-//         // Lock the mutex before accessing shared data
-//         pthread_mutex_lock(&table->check);
-//         if (table->dead || table->full) {
-//             pthread_mutex_unlock(&table->check);
-//             break;
-//         }
-//         pthread_mutex_unlock(&table->check);
-
-//         philo_eat(philo);
-
-//         // Lock the mutex before displaying messages or accessing shared data
-//         pthread_mutex_lock(&table->check);
-//         if (!table->dead && !table->full)
-//             display_message(philo, MESSAGE_SLEEP);
-//         pthread_mutex_unlock(&table->check);
-
-//         wait_time(table, table->time_to_sleep);
-
-//         // Lock the mutex before displaying messages or accessing shared data
-//         pthread_mutex_lock(&table->check);
-//         if (!table->dead && !table->full)
-//             display_message(philo, MESSAGE_THINK);
-//         pthread_mutex_unlock(&table->check);
-//     }
-
-//     return (NULL);
-// }

@@ -12,37 +12,70 @@
 
 #include "philo.h"
 
-static int	error(void)
+/* start_simulation:
+*	Launches the simulation by creating a grim reaper thread as well as
+*	one thread for each philosopher.
+*	Returns true if the simulation was successfully started, false if there
+*	was an error. 
+*/
+static bool	start_simulation(t_table *table)
 {
-	write(2, "Error! invalid arguments\n", 26);
-	return (1);
+	unsigned int	i;
+
+	table->start_time = get_time_in_ms() + (table->nb_philos * 2 * 10);
+	i = 0;
+	while (i < table->nb_philos)
+	{
+		if (pthread_create(&table->philos[i]->thread, NULL,
+				&philosopher, table->philos[i]) != 0)
+			return (error_failure(STR_ERR_THREAD, NULL, table));
+		i++;
+	}
+	if (table->nb_philos > 1)
+	{
+		if (pthread_create(&table->check_death, NULL,
+				&check_death, table) != 0)
+			return (error_failure(STR_ERR_THREAD, NULL, table));
+	}
+	return (true);
 }
 
-int	main(int argc, char *argv[])
+/* stop_simulation:
+*	Waits for all threads to be joined then destroys mutexes and frees
+*	allocated memory.
+*/
+static void	stop_simulation(t_table	*table)
 {
-	int			i;
-	t_table		tab;
-	pthread_t	*threads;
+	unsigned int	i;
 
-	if ((argc < 5 || argc > 6) || verify_args(argc, argv, &tab))
-		return (error());
-	threads = (pthread_t *)malloc(tab.num_philos * sizeof(pthread_t));
-	tab.start_time = get_current_time();
-	i = -1;
-	while (++i < tab.num_philos)
+	i = 0;
+	while (i < table->nb_philos)
 	{
-		if (pthread_create(&threads[i], NULL, &life, &tab.philos[i]))
-		{
-			write(2, "Error! cannot create thread\n", 28);
-			free(tab.philos);
-			free(threads);
-			return (1);
-		}
-		pthread_mutex_lock(&tab.check);
-		tab.philos[i].last_meal = tab.start_time;
-		pthread_mutex_unlock(&tab.check);
+		pthread_join(table->philos[i]->thread, NULL);
+		i++;
 	}
-	check_death(&tab);
-	exit_simulation(&tab, threads);
-	return (0);
+	if (table->nb_philos > 1)
+		pthread_join(table->check_death, NULL);
+	if (DEBUG_FORMATTING == true && table->must_eat_count != -1)
+		write_outcome(table);
+	destroy_mutexes(table);
+	free_table(table);
+}
+
+int	main(int ac, char **av)
+{
+	t_table	*table;
+
+	table = NULL;
+	if (ac - 1 < 4 || ac - 1 > 5)
+		return (message(STR_USAGE, NULL, EXIT_FAILURE));
+	if (!is_valid_input(ac, av))
+		return (EXIT_FAILURE);
+	table = init_table(ac, av, 1);
+	if (!table)
+		return (EXIT_FAILURE);
+	if (!start_simulation(table))
+		return (EXIT_FAILURE);
+	stop_simulation(table);
+	return (EXIT_SUCCESS);
 }

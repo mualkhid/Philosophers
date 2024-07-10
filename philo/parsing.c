@@ -12,74 +12,69 @@
 
 #include "philo.h"
 
-static int	verify_numbers(int argc, char *argv[])
-{
-	int	i;
-	int	j;
-
-	i = 0;
-	while (++i < argc)
-	{
-		j = -1;
-		if (argv[i][0] == '-')
-			return (1);
-		else if (argv[i][0] == '+')
-			j++;
-		if (!ft_isdigit(argv[i][j + 1]))
-			return (1);
-		while (argv[i][++j])
-		{
-			if (!ft_isdigit(argv[i][j]))
-				return (1);
-		}
-	}
-	return (0);
-}
-
-static int	verify_integer(char *s)
-{
-	size_t	len;
-
-	len = ft_strlen(s);
-	if (*s == '+' && s++)
-		len--;
-	while (*s == '0' && *s && len--)
-		s++;
-	if (len > 10)
-		return (1);
-	else if (len < 10)
-		return (0);
-	if (ft_strncmp(s, "2147483648", 10) >= 0)
-		return (1);
-	return (0);
-}
-
-static int	validate_args(int argc, char *argv[])
+/* ft_isdigit:
+*	Checks if a string contains only digits 0 - 9.
+*	Returns true if the string only contains digits.
+*	Returns false if the string contains a character that is not a digit.
+*/
+static bool	ft_isdigit(char *str)
 {
 	int	i;
 
-	if (verify_numbers(argc, argv))
-		return (1);
 	i = 0;
-	while (++i < argc)
+	while (str[i])
 	{
-		if (verify_integer(argv[i]))
-			return (1);
+		if (str[i] < '0' || str[i] > '9')
+			return (false);
+		i++;
 	}
-	return (0);
+	return (true);
 }
 
-int	verify_args(int argc, char *argv[], t_table *tab)
+/* ft_atoi:
+*	Converts a digit-only string into a positive integer.
+*	Returns the converted number between 0 and INT MAX.
+*	Returns -1 if the converted number exceeds INT MAX.
+*/
+int	ft_atoi(char *str)
 {
-	if (validate_args(argc, argv))
-		return (1);
-	tab->num_philos = ft_atoi(argv[1]);
-	tab->time_to_starve = ft_atoi(argv[2]);
-	tab->time_to_eat = ft_atoi(argv[3]);
-	tab->time_to_sleep = ft_atoi(argv[4]);
-	tab->number_of_meals = -1;
-	if (argc == 6)
-		tab->number_of_meals = ft_atoi(argv[5]);
-	initialize(tab);
-	return (0);
+	unsigned long long int	nb;
+	int						i;
+
+	i = 0;
+	nb = 0;
+	while (str[i] && (str[i] >= '0' && str[i] <= '9'))
+	{
+		nb = nb * 10 + (str[i] - '0');
+		i++;
+	}
+	if (nb > INT_MAX)
+		return (-1);
+	return ((int)nb);
+}
+
+/* is_valid_input:
+*	Checks if all required arguments are valid, i.e. is a string of
+*	digits only, which does not exceed INT MAX. Also checks if the number
+*	of philosophers is valid (between 1 and MAX_PHILOS).
+*	Returns true if all arguments are valid, false if one of them is invalid.
+*/
+bool	is_valid_input(int ac, char **av)
+{
+	int	i;
+	int	nb;
+
+	i = 1;
+	while (i < ac)
+	{
+		if (!ft_isdigit(av[i]))
+			return (message(STR_ERR_INPUT_DIGIT, av[i], false));
+		nb = ft_atoi(av[i]);
+		if (i == 1 && (nb <= 0 || nb > MAX_PHILOS))
+			return (message(STR_ERR_INPUT_POFLOW, STR_MAX_PHILOS, false));
+		if (i != 1 && nb == -1)
+			return (message(STR_ERR_INPUT_DIGIT, av[i], false));
+		i++;
+	}
+	return (true);
 }
