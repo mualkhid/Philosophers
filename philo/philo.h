@@ -21,9 +21,6 @@
 # include <sys/time.h>
 # include <stdbool.h>
 
-/******************************************************************************
-*                                     Macros                                  *
-******************************************************************************/
 
 # define MAX_PHILOS	250
 # define STR_MAX_PHILOS "250"
@@ -50,9 +47,7 @@ there must be between 1 and %s philosophers.\n"
 # define STR_ERR_MALLOC	"%s error: Could not allocate memory.\n"
 # define STR_ERR_MUTEX	"%s error: Could not create mutex.\n"
 
-/******************************************************************************
-*                                 Structures                                  *
-******************************************************************************/
+
 
 typedef struct s_philo	t_philo;
 
@@ -93,9 +88,7 @@ typedef enum e_status
 	GOT_FORK_2 = 5
 }	t_status;
 
-/******************************************************************************
-*                           Function Prototypes                               *
-******************************************************************************/
+
 
 //	parsing.c
 bool			is_valid_input(int ac, char **av);

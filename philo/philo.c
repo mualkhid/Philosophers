@@ -12,12 +12,6 @@
 
 #include "philo.h"
 
-/* start_simulation:
-*	Launches the simulation by creating a grim reaper thread as well as
-*	one thread for each philosopher.
-*	Returns true if the simulation was successfully started, false if there
-*	was an error. 
-*/
 static bool	start_simulation(t_table *table)
 {
 	unsigned int	i;
@@ -40,10 +34,7 @@ static bool	start_simulation(t_table *table)
 	return (true);
 }
 
-/* stop_simulation:
-*	Waits for all threads to be joined then destroys mutexes and frees
-*	allocated memory.
-*/
+
 static void	stop_simulation(t_table	*table)
 {
 	unsigned int	i;

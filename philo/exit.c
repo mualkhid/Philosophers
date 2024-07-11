@@ -13,11 +13,7 @@
 
 #include "philo.h"
 
-/* free_table:
-*	Frees all of the memory allocated by the program.
-*	Returns a NULL pointer if there is nothing to free,
-*	or when all memory has been freed.
-*/
+
 void	*free_table(t_table *table)
 {
 	unsigned int	i;
@@ -41,10 +37,7 @@ void	*free_table(t_table *table)
 	return (NULL);
 }
 
-/* destroy_mutexts:
-*	Destroys every mutex created by the program: fork locks, meal locks,
-*	the write and simulation stopper lock.
-*/
+
 void	destroy_mutexes(t_table *table)
 {
 	unsigned int	i;
@@ -60,10 +53,7 @@ void	destroy_mutexes(t_table *table)
 	pthread_mutex_destroy(&table->sim_stop_lock);
 }
 
-/* message:
-*	Writes a message to the console. Returns the provided exit number.
-*	Used for error management.
-*/
+
 int	message(char *str, char *detail, int exit_no)
 {
 	if (!detail)
@@ -73,11 +63,7 @@ int	message(char *str, char *detail, int exit_no)
 	return (exit_no);
 }
 
-/* error_failure:
-*	Frees any allocated memory, prints an error message and
-*	returns 0 to indicate failure.
-*	Used for error management during initialization.
-*/
+
 int	error_failure(char *str, char *details, t_table *table)
 {
 	if (table != NULL)
@@ -85,10 +71,6 @@ int	error_failure(char *str, char *details, t_table *table)
 	return (message(str, details, 0));
 }
 
-/* error_null:
-*	Frees any allocated memory, prints an error message and returns a NULL pointer.
-*	Used for error management during initialization.
-*/
 void	*error_null(char *str, char *details, t_table *table)
 {
 	if (table != NULL)

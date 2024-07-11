@@ -12,11 +12,7 @@
 
 #include "philo.h"
 
-/* ft_isdigit:
-*	Checks if a string contains only digits 0 - 9.
-*	Returns true if the string only contains digits.
-*	Returns false if the string contains a character that is not a digit.
-*/
+
 static bool	ft_isdigit(char *str)
 {
 	int	i;
@@ -31,11 +27,7 @@ static bool	ft_isdigit(char *str)
 	return (true);
 }
 
-/* ft_atoi:
-*	Converts a digit-only string into a positive integer.
-*	Returns the converted number between 0 and INT MAX.
-*	Returns -1 if the converted number exceeds INT MAX.
-*/
+
 int	ft_atoi(char *str)
 {
 	unsigned long long int	nb;
@@ -53,12 +45,7 @@ int	ft_atoi(char *str)
 	return ((int)nb);
 }
 
-/* is_valid_input:
-*	Checks if all required arguments are valid, i.e. is a string of
-*	digits only, which does not exceed INT MAX. Also checks if the number
-*	of philosophers is valid (between 1 and MAX_PHILOS).
-*	Returns true if all arguments are valid, false if one of them is invalid.
-*/
+
 bool	is_valid_input(int ac, char **av)
 {
 	int	i;
