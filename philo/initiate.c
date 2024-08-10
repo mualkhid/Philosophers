@@ -12,7 +12,6 @@
 
 #include "philo.h"
 
-
 static pthread_mutex_t	*init_forks(t_table *table)
 {
 	pthread_mutex_t	*forks;
@@ -31,7 +30,6 @@ static pthread_mutex_t	*init_forks(t_table *table)
 	return (forks);
 }
 
-
 static void	assign_forks(t_philo *philo)
 {
 	philo->fork[0] = philo->id;
@@ -42,7 +40,6 @@ static void	assign_forks(t_philo *philo)
 		philo->fork[1] = philo->id;
 	}
 }
-
 
 static t_philo	**init_philos(t_table *table)
 {
@@ -69,7 +66,6 @@ static t_philo	**init_philos(t_table *table)
 	return (philos);
 }
 
-
 static bool	init_global_mutexes(t_table *table)
 {
 	table->fork_locks = init_forks(table);
@@ -81,7 +77,6 @@ static bool	init_global_mutexes(t_table *table)
 		return (error_failure(STR_ERR_MUTEX, NULL, table));
 	return (true);
 }
-
 
 t_table	*init_table(int ac, char **av, int i)
 {

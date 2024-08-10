@@ -10,26 +10,23 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-
 #include "philo.h"
 
-static void	print_status_debug(t_philo *philo, char *color,
-								char *str, t_status status)
+static void	print_status_debug(t_philo *philo, char *color, char *str,
+		t_status status)
 {
 	if (status == GOT_FORK_1)
-		printf("[%10ld]\t%s%03d\t%s\e[0m: fork [%d]\n",
-			get_time_in_ms() - philo->table->start_time,
-			color, philo->id + 1, str, philo->fork[0]);
+		printf("[%10ld]\t%s%03d\t%s\e[0m: fork [%d]\n", get_time_in_ms()
+			- philo->table->start_time, color, philo->id + 1, str,
+			philo->fork[0]);
 	else if (status == GOT_FORK_2)
-		printf("[%10ld]\t%s%03d\t%s\e[0m: fork [%d]\n",
-			get_time_in_ms() - philo->table->start_time,
-			color, philo->id + 1, str, philo->fork[1]);
+		printf("[%10ld]\t%s%03d\t%s\e[0m: fork [%d]\n", get_time_in_ms()
+			- philo->table->start_time, color, philo->id + 1, str,
+			philo->fork[1]);
 	else
-		printf("[%10ld]\t%s%03d\t%s\e[0m\n",
-			get_time_in_ms() - philo->table->start_time,
-			color, philo->id + 1, str);
+		printf("[%10ld]\t%s%03d\t%s\e[0m\n", get_time_in_ms()
+			- philo->table->start_time, color, philo->id + 1, str);
 }
-
 
 static void	write_status_debug(t_philo *philo, t_status status)
 {
@@ -47,11 +44,10 @@ static void	write_status_debug(t_philo *philo, t_status status)
 		print_status_debug(philo, PURPLE, "has taken a fork", status);
 }
 
-
 static void	print_status(t_philo *philo, char *str)
 {
-	printf("%ld %d %s\n", get_time_in_ms() - philo->table->start_time,
-		philo->id + 1, str);
+	printf("%ld %d %s\n", get_time_in_ms() - philo->table->start_time, philo->id
+		+ 1, str);
 }
 
 void	write_status(t_philo *philo, bool reaper_report, t_status status)
@@ -81,8 +77,6 @@ void	write_status(t_philo *philo, bool reaper_report, t_status status)
 	pthread_mutex_unlock(&philo->table->write_lock);
 }
 
-
-
 void	write_outcome(t_table *table)
 {
 	unsigned int	i;
@@ -97,8 +91,8 @@ void	write_outcome(t_table *table)
 		i++;
 	}
 	pthread_mutex_lock(&table->write_lock);
-	printf("%d/%d philosophers had at least %d meals.\n",
-		full_count, table->nb_philos, table->must_eat_count);
+	printf("%d/%d philosophers had at least %d meals.\n", full_count,
+		table->nb_philos, table->must_eat_count);
 	pthread_mutex_unlock(&table->write_lock);
 	return ;
 }

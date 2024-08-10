@@ -1,18 +1,16 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   philo_utils.c                                         :+:      :+:    :+:   */
+/*   philo_utils.c                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: mualkhid <mualkhid@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/07/05 15:44:06 by mualkhid          #+#    #+#             */
-/*   Updated: 2024/07/06 17:18:04 by mualkhid         ###   ########.fr       */
+/*   Created: 2024/08/10 16:55:40 by mualkhid          #+#    #+#             */
+/*   Updated: 2024/08/10 16:55:45 by mualkhid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-
 #include "philo.h"
-
 
 static void	eat_sleep_routine(t_philo *philo)
 {
@@ -42,9 +40,8 @@ static void	think_routine(t_philo *philo, bool silent)
 	time_t	time_to_think;
 
 	pthread_mutex_lock(&philo->meal_time_lock);
-	time_to_think = (philo->table->time_to_die
-			- (get_time_in_ms() - philo->last_meal)
-			- philo->table->time_to_eat) / 2;
+	time_to_think = (philo->table->time_to_die - (get_time_in_ms()
+				- philo->last_meal) - philo->table->time_to_eat) / 2;
 	pthread_mutex_unlock(&philo->meal_time_lock);
 	if (time_to_think < 0)
 		time_to_think = 0;
@@ -66,7 +63,6 @@ static void	*lone_philo_routine(t_philo *philo)
 	pthread_mutex_unlock(&philo->table->fork_locks[philo->fork[0]]);
 	return (NULL);
 }
-
 
 void	*philosopher(void *data)
 {

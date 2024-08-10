@@ -10,9 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-
 #include "philo.h"
-
 
 void	*free_table(t_table *table)
 {
@@ -37,7 +35,6 @@ void	*free_table(t_table *table)
 	return (NULL);
 }
 
-
 void	destroy_mutexes(t_table *table)
 {
 	unsigned int	i;
@@ -53,7 +50,6 @@ void	destroy_mutexes(t_table *table)
 	pthread_mutex_destroy(&table->sim_stop_lock);
 }
 
-
 int	message(char *str, char *detail, int exit_no)
 {
 	if (!detail)
@@ -62,7 +58,6 @@ int	message(char *str, char *detail, int exit_no)
 		printf(str, STR_PROG_NAME, detail);
 	return (exit_no);
 }
-
 
 int	error_failure(char *str, char *details, t_table *table)
 {

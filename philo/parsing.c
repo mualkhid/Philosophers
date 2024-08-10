@@ -12,7 +12,6 @@
 
 #include "philo.h"
 
-
 static bool	ft_isdigit(char *str)
 {
 	int	i;
@@ -26,7 +25,6 @@ static bool	ft_isdigit(char *str)
 	}
 	return (true);
 }
-
 
 int	ft_atoi(char *str)
 {
@@ -44,7 +42,6 @@ int	ft_atoi(char *str)
 		return (-1);
 	return ((int)nb);
 }
-
 
 bool	is_valid_input(int ac, char **av)
 {

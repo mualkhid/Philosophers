@@ -6,20 +6,18 @@
 /*   By: mualkhid <mualkhid@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/05 15:45:02 by mualkhid          #+#    #+#             */
-/*   Updated: 2024/07/06 16:19:17 by mualkhid         ###   ########.fr       */
+/*   Updated: 2024/08/10 16:56:27 by mualkhid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philo.h"
 
-
 static void	set_sim_stop_flag(t_table *table, bool state)
 {
 	pthread_mutex_lock(&table->sim_stop_lock);
-		table->sim_stop = state;
+	table->sim_stop = state;
 	pthread_mutex_unlock(&table->sim_stop_lock);
 }
-
 
 bool	has_simulation_stopped(t_table *table)
 {
@@ -48,7 +46,6 @@ static bool	kill_philo(t_philo *philo)
 	return (false);
 }
 
-
 static bool	end_condition_reached(t_table *table)
 {
 	unsigned int	i;
@@ -76,10 +73,9 @@ static bool	end_condition_reached(t_table *table)
 	return (false);
 }
 
-
 void	*check_death(void *data)
 {
-	t_table			*table;
+	t_table	*table;
 
 	table = (t_table *)data;
 	if (table->must_eat_count == 0)

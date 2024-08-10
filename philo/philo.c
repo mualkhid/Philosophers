@@ -20,22 +20,20 @@ static bool	start_simulation(t_table *table)
 	i = 0;
 	while (i < table->nb_philos)
 	{
-		if (pthread_create(&table->philos[i]->thread, NULL,
-				&philosopher, table->philos[i]) != 0)
+		if (pthread_create(&table->philos[i]->thread, NULL, &philosopher,
+				table->philos[i]) != 0)
 			return (error_failure(STR_ERR_THREAD, NULL, table));
 		i++;
 	}
 	if (table->nb_philos > 1)
 	{
-		if (pthread_create(&table->check_death, NULL,
-				&check_death, table) != 0)
+		if (pthread_create(&table->check_death, NULL, &check_death, table) != 0)
 			return (error_failure(STR_ERR_THREAD, NULL, table));
 	}
 	return (true);
 }
 
-
-static void	stop_simulation(t_table	*table)
+static void	stop_simulation(t_table *table)
 {
 	unsigned int	i;
 
