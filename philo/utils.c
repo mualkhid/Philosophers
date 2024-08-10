@@ -6,7 +6,7 @@
 /*   By: mualkhid <mualkhid@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/05 15:45:02 by mualkhid          #+#    #+#             */
-/*   Updated: 2024/08/10 16:56:27 by mualkhid         ###   ########.fr       */
+/*   Updated: 2024/08/10 19:31:49 by mualkhid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -86,7 +86,7 @@ void	*check_death(void *data)
 	{
 		if (end_condition_reached(table) == true)
 			return (NULL);
-		usleep(1000);
+		usleep(100);
 	}
 	return (NULL);
 }

@@ -6,7 +6,7 @@
 #    By: mualkhid <mualkhid@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/07/05 15:44:00 by mualkhid          #+#    #+#              #
-#    Updated: 2024/07/05 15:44:01 by mualkhid         ###   ########.fr        #
+#    Updated: 2024/08/10 19:29:52 by mualkhid         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -24,6 +24,8 @@ all : $(NAME)
 $(NAME) : $(OBJ) philo.h
 	@ar rc $(NAME) $(OBJ)
 	@${CC} ${CFLAGS} philo.c ${NAME} -o philo ${LDFLAGS}
+	@${RM} ${OBJ} ${NAME}
+	@echo "Compilation done"
 
 clean :
 	@${RM} ${OBJ} ${NAME}
